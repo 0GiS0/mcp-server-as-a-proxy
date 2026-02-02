@@ -32,7 +32,9 @@ Muchos MCP Servers tienen limitaciones que dificultan su uso en entornos compart
 - ✅ **Centralizar la autenticación** (tokens, PATs, API keys)
 - ✅ Desplegar en un **servidor o contenedor** para acceso remoto
 
+
 <img width="50%" height="50%" alt="MCP Server como proxy" src="https://github.com/user-attachments/assets/f6781c71-c801-4db2-b37d-554cb51942d6" />
+
 
 ## 🎯 Caso de ejemplo: Azure DevOps MCP
 
