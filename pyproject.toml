@@ -1,0 +1,36 @@
+[project]
+name = "azure-devops-mcp-proxy"
+version = "0.1.0"
+description = "FastMCP proxy server for Azure DevOps MCP - exposes stdio-based Azure DevOps MCP as HTTP/SSE"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Gisela Torres", email = "gis@yourserver.com" }
+]
+keywords = ["mcp", "azure-devops", "fastmcp", "proxy", "model-context-protocol"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "fastmcp>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/0GiS0/mcp-server-as-a-proxy"
+Repository = "https://github.com/0GiS0/mcp-server-as-a-proxy"
+Issues = "https://github.com/0GiS0/mcp-server-as-a-proxy/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
