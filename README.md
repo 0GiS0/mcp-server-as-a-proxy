@@ -1,43 +1,64 @@
-# 🔌 MCP Server como Proxy de Azure DevOps MCP
+# 🔌 MCP Server Proxy con FastMCP
+
+<div align="center">
+
+[![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UC140iBrEZbOtvxWsJ-Tb0lQ?style=for-the-badge&logo=youtube&logoColor=white&color=red)](https://www.youtube.com/c/GiselaTorres?sub_confirmation=1)
+[![GitHub followers](https://img.shields.io/github/followers/0GiS0?style=for-the-badge&logo=github&logoColor=white)](https://github.com/0GiS0)
+[![LinkedIn Follow](https://img.shields.io/badge/LinkedIn-Sígueme-blue?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/giselatorresbuitrago/)
+[![X Follow](https://img.shields.io/badge/X-Sígueme-black?style=for-the-badge&logo=x&logoColor=white)](https://twitter.com/0GiS0)
+
+</div>
+
+---
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![FastMCP](https://img.shields.io/badge/FastMCP-2.0+-purple.svg)](https://gofastmcp.com/)
-[![Azure DevOps](https://img.shields.io/badge/Azure%20DevOps-MCP-0078D4.svg)](https://github.com/microsoft/azure-devops-mcp)
 
 ## 🤔 ¿Qué problema resuelve?
 
-El [Azure DevOps MCP Server](https://github.com/microsoft/azure-devops-mcp) oficial de Microsoft funciona únicamente via **stdio** (entrada/salida estándar). Esto significa que:
+Muchos MCP Servers tienen limitaciones que dificultan su uso en entornos compartidos o remotos:
 
-- ❌ Solo puede ejecutarse **localmente** en tu máquina
-- ❌ No puede exponerse como un **servicio remoto**
-- ❌ No es accesible desde **otros dispositivos o servidores**
-- ❌ Requiere tener **Node.js instalado** en cada máquina cliente
+- ❌ Funcionan via **stdio** → Solo pueden ejecutarse localmente
+- ❌ Requieren **credenciales** (PAT, API Keys, tokens) → Cada cliente debe configurarlas
+- ❌ Necesitan **dependencias** específicas → Hay que instalarlas en cada máquina
+- ❌ No pueden exponerse como **servicio remoto**
 
-**Este proxy resuelve estos problemas** exponiendo el Azure DevOps MCP Server via **HTTP/SSE**, permitiendo:
+**Este proyecto demuestra cómo crear un proxy** con [FastMCP](https://gofastmcp.com/) que resuelve estos problemas:
 
 - ✅ Ejecutar el servidor en una **máquina centralizada**
 - ✅ Acceder desde **cualquier cliente MCP** via HTTP
-- ✅ **Compartir** el acceso a Azure DevOps entre múltiples usuarios/agentes
+- ✅ **Compartir** el acceso entre múltiples usuarios/agentes
+- ✅ **Centralizar la autenticación** (tokens, PATs, API keys)
 - ✅ Desplegar en un **servidor o contenedor** para acceso remoto
+
+## 🎯 Caso de ejemplo: Azure DevOps MCP
+
+Este repositorio usa el [Azure DevOps MCP Server](https://github.com/microsoft/azure-devops-mcp) como ejemplo porque:
+
+1. **Usa stdio** → No puede exponerse directamente como servicio
+2. **Requiere PAT** → Necesita un Personal Access Token para autenticarse
+3. **Es muy útil** → Permite interactuar con Azure DevOps desde agentes IA
+
+Pero el mismo patrón aplica a **cualquier MCP Server** que use stdio y/o requiera credenciales.
 
 ## 🏗️ Arquitectura
 
 ```
 ┌─────────────┐     HTTP/SSE      ┌─────────────────┐     stdio      ┌──────────────────────┐
-│  MCP Client │ ───────────────▶  │  FastMCP Proxy  │ ────────────▶  │  Azure DevOps MCP    │
-│  (Copilot)  │                   │  (Este Server)  │                │  (@azure-devops/mcp) │
+│  MCP Client │ ───────────────▶  │  FastMCP Proxy  │ ────────────▶  │  MCP Server (stdio)  │
+│  (Copilot)  │                   │  (Este Server)  │                │  (ej: Azure DevOps)  │
 └─────────────┘                   └─────────────────┘                └──────────────────────┘
                                          │
                                          ▼
-                                  🔐 PAT Authentication
-                                  (ADO_MCP_AUTH_TOKEN)
+                                  🔐 Credenciales centralizadas
+                                  (PAT, API Keys, Tokens...)
 ```
 
 ## 📋 Requisitos
 
 - **Python** 3.10 o superior
-- **Node.js** 20 o superior (para `npx`)
-- **Personal Access Token (PAT)** de Azure DevOps
+- **Node.js** 20 o superior (para el ejemplo con Azure DevOps)
+- Las **credenciales** que requiera el MCP Server que quieras proxear
 
 ## 🚀 Instalación
 
@@ -60,7 +81,7 @@ pip install -e .
 cp .env.example .env
 ```
 
-Edita el archivo `.env` con tus credenciales:
+Edita el archivo `.env` con tus credenciales (ejemplo para Azure DevOps):
 
 ```env
 AZURE_DEVOPS_ORG=tu-organizacion
@@ -73,24 +94,37 @@ ADO_MCP_AUTH_TOKEN=tu-personal-access-token
 python proxy_server.py
 ```
 
-El servidor estará disponible en `http://localhost:8080/sse`
+El servidor estará disponible en `http://localhost:8080/mcp`
 
-## 🔑 Permisos del PAT
+## 🔧 Cómo adaptar a otro MCP Server
 
-Dependiendo de los dominios que necesites usar, tu PAT debe tener estos permisos:
+El código en `proxy_server.py` se puede adaptar fácilmente para cualquier MCP Server stdio:
 
-| Dominio | Permiso requerido |
-|---------|-------------------|
-| `core` | Project and Team: **Read** |
-| `work` / `work-items` | Work Items: **Read & Write** |
-| `repositories` | Code: **Read** (o Read & Write para PRs) |
-| `pipelines` | Build: **Read**, Release: **Read** |
-| `wiki` | Wiki: **Read & Write** |
-| `test-plans` | Test Management: **Read & Write** |
-| `search` | Code: **Read**, Work Items: **Read** |
-| `advanced-security` | Advanced Security: **Read** |
+```python
+from fastmcp import FastMCP
+from fastmcp.server.proxy import ProxyClient
+from fastmcp.client.transports import StdioTransport
 
-📎 Crea tu PAT en: `https://dev.azure.com/{tu-org}/_usersSettings/tokens`
+# 1️⃣ Configura el transport para TU MCP Server
+transport = StdioTransport(
+    command="npx",                    # O python, node, etc.
+    args=["-y", "@tu-mcp/server"],    # Argumentos del servidor
+    env={
+        "API_KEY": "tu-api-key",      # Variables de entorno necesarias
+        "OTHER_SECRET": "..."
+    }
+)
+
+# 2️⃣ Crea el proxy
+proxy = FastMCP.as_proxy(
+    ProxyClient(transport),
+    name="MiMCPProxy"
+)
+
+# 3️⃣ Expón via HTTP (Streamable)
+if __name__ == "__main__":
+    proxy.run(transport="http", host="0.0.0.0", port=8080)
+```
 
 ## 🔌 Configuración del Cliente MCP
 
@@ -98,12 +132,12 @@ Dependiendo de los dominios que necesites usar, tu PAT debe tener estos permisos
 
 ```json
 {
-    "servers": {
-        "azure-devops-proxy": {
-            "type": "sse",
-            "url": "http://localhost:8080/sse"
-        }
+  "servers": {
+    "mi-proxy": {
+      "type": "http",
+      "url": "http://localhost:8080/mcp"
     }
+  }
 }
 ```
 
@@ -111,31 +145,61 @@ Dependiendo de los dominios que necesites usar, tu PAT debe tener estos permisos
 
 ```json
 {
-    "mcpServers": {
-        "azure-devops": {
-            "url": "http://localhost:8080/sse",
-            "transport": "sse"
-        }
+  "mcpServers": {
+    "mi-proxy": {
+      "url": "http://localhost:8080/mcp",
+      "transport": "http"
     }
+  }
 }
 ```
 
 ## ⚠️ Seguridad
 
-> **IMPORTANTE**: Este proxy actualmente no implementa autenticación propia. 
-> Para uso en producción, considera añadir una capa de autenticación.
+> **IMPORTANTE**: Este proxy actualmente no implementa autenticación propia.
+> Para uso en producción, añade una capa de autenticación.
 
-Opciones recomendadas:
+### 🔐 Autenticación con Microsoft Entra ID
 
-- 🔐 **Microsoft Entra ID**: [OAuth Proxy](https://gofastmcp.com/servers/auth/oauth-proxy)
-- 🔑 **API Key**: [Auth docs](https://gofastmcp.com/servers/auth)
-- 🛡️ **Custom middleware**: [Custom Auth](https://gofastmcp.com/servers/auth/custom)
+FastMCP incluye un provider nativo para Azure. Documentación completa: [FastMCP Azure Integration](https://gofastmcp.com/integrations/azure)
+
+```python
+from fastmcp.server.auth.providers.azure import AzureProvider
+
+auth_provider = AzureProvider(
+    client_id="tu-app-client-id",
+    client_secret="tu-client-secret",
+    tenant_id="tu-tenant-id",
+    base_url="http://localhost:8080",
+    required_scopes=["mcp-access"],
+)
+
+proxy = FastMCP.as_proxy(
+    ProxyClient(transport),
+    name="MiProxy",
+    auth=auth_provider  # 👈 Añadir autenticación
+)
+```
 
 ## 📚 Referencias
 
 - [FastMCP - Proxy Servers](https://gofastmcp.com/v2/servers/proxy)
-- [Azure DevOps MCP Server](https://github.com/microsoft/azure-devops-mcp)
+- [FastMCP - Azure Auth](https://gofastmcp.com/integrations/azure)
+- [Azure DevOps MCP Server](https://github.com/microsoft/azure-devops-mcp) (ejemplo usado)
 - [MCP Protocol](https://modelcontextprotocol.io/)
+
+## 🌐 Sígueme en Mis Redes Sociales
+
+Si te ha gustado este proyecto y quieres ver más contenido como este, no olvides suscribirte a mi canal de YouTube y seguirme en mis redes sociales:
+
+<div align="center">
+
+[![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UC140iBrEZbOtvxWsJ-Tb0lQ?style=for-the-badge&logo=youtube&logoColor=white&color=red)](https://www.youtube.com/c/GiselaTorres?sub_confirmation=1)
+[![GitHub followers](https://img.shields.io/github/followers/0GiS0?style=for-the-badge&logo=github&logoColor=white)](https://github.com/0GiS0)
+[![LinkedIn Follow](https://img.shields.io/badge/LinkedIn-Sígueme-blue?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/giselatorresbuitrago/)
+[![X Follow](https://img.shields.io/badge/X-Sígueme-black?style=for-the-badge&logo=x&logoColor=white)](https://twitter.com/0GiS0)
+
+</div>
 
 ## 📄 Licencia
 
