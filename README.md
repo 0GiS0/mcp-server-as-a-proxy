@@ -14,7 +14,6 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![FastMCP](https://img.shields.io/badge/FastMCP-2.0+-purple.svg)](https://gofastmcp.com/)
 
-
 ## 🤔 ¿Qué problema resuelve?
 
 Muchos MCP Servers tienen limitaciones que dificultan su uso en entornos compartidos o remotos:
@@ -32,9 +31,9 @@ Muchos MCP Servers tienen limitaciones que dificultan su uso en entornos compart
 - ✅ **Centralizar la autenticación** (tokens, PATs, API keys)
 - ✅ Desplegar en un **servidor o contenedor** para acceso remoto
 
-
-<img width="50%" height="50%" alt="MCP Server como proxy" src="https://github.com/user-attachments/assets/f6781c71-c801-4db2-b37d-554cb51942d6" />
-
+<div align="center">
+  <img width="70%" alt="MCP Server como proxy" src="https://github.com/user-attachments/assets/f6781c71-c801-4db2-b37d-554cb51942d6" />
+</div>
 
 ## 🎯 Caso de ejemplo: Azure DevOps MCP
 
